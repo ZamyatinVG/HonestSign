@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Web;
 using System.Web.Configuration;
 using System.Configuration;
 using System.Xml;
 using System.IO;
+using System.Text;
 using RestSharp;
 using Newtonsoft.Json;
 using NLog;
@@ -71,7 +73,7 @@ namespace HonestSign.Models
             Cis cis = new Cis();
             try
             {
-                var client = new RestClient($"{config.AppSettings.Settings["url"].Value}v4/facade/identifytools/info?childrenPage=1&childrenLimit=50&cis={km}");
+                var client = new RestClient($"{config.AppSettings.Settings["url"].Value}v4/facade/identifytools/info?childrenPage=1&childrenLimit=50&cis={HttpUtility.UrlEncode(km, Encoding.UTF8)}");
                 client.Timeout = -1;
                 var request = new RestRequest(Method.GET);
                 request.AddHeader("Authorization", $"Bearer {token}");
