@@ -14,87 +14,85 @@ namespace HonestSign.Models
 {
     public class KM
     {
-        static Logger logger = LogManager.GetCurrentClassLogger();
-        static Configuration config = WebConfigurationManager.OpenWebConfiguration("~");
+        static readonly Logger logger = LogManager.GetCurrentClassLogger();
+        static readonly Configuration config = WebConfigurationManager.OpenWebConfiguration("~");
         static string token;
-        public class TokenResponse
+        public class CIS
         {
-            public string token { get; set; }
-            public int code { get; set; }
-            public string description { get; set; }
-            public string error_message { get; set; }
+            public string Uit { get; set; }
+            public string Cis { get; set; }
+            public string Gtin { get; set; }
+            public string Sgtin { get; set; }
+            public string TnVedEaesCode { get; set; }
+            public string ProductName { get; set; }
+            public DateTime EmissionDate { get; set; }
+            public string ProducerName { get; set; }
+            public string ProducerInn { get; set; }
+            public string LastDocId { get; set; }
+            public string LastDocType { get; set; }
+            public string EmissionType { get; set; }
+            public List<object> PrevCises { get; set; }
+            public List<object> NextCises { get; set; }
+            public string Status { get; set; }
+            public string PackType { get; set; }
+            public DateTime IntroducedDate { get; set; }
+            public DateTime LastStatusChangeDate { get; set; }
+            public string ProductGroup { get; set; }
+            public bool MarkWithdraw { get; set; }
+            public int Code { get; set; }
+            public string Error { get; set; }
+            public string Error_message { get; set; }
         }
-        public class Cis
+        public static CIS TranslateCis(CIS cis)
         {
-            public string uit { get; set; }
-            public string cis { get; set; }
-            public string gtin { get; set; }
-            public string sgtin { get; set; }
-            public string tnVedEaesCode { get; set; }
-            public string productName { get; set; }
-            public DateTime emissionDate { get; set; }
-            public string producerName { get; set; }
-            public string producerInn { get; set; }
-            public string lastDocId { get; set; }
-            public string lastDocType { get; set; }
-            public string emissionType { get; set; }
-            public List<object> prevCises { get; set; }
-            public List<object> nextCises { get; set; }
-            public string status { get; set; }
-            public string packType { get; set; }
-            public DateTime introducedDate { get; set; }
-            public DateTime lastStatusChangeDate { get; set; }
-            public string productGroup { get; set; }
-            public bool markWithdraw { get; set; }
-            public int code { get; set; }
-            public string description { get; set; }
-            public string error { get; set; }
-            public string error_message { get; set; }
-        }
-        public static Cis TranslateCis(Cis cis)
-        {
-            if (cis.status == "EMITTED") cis.status = "Эмитирован. Выпущен";
-            if (cis.status == "APPLIED") cis.status = "Эмитирован. Получен";
-            if (cis.status == "INTRODUCED") cis.status = "В обороте";
-            if (cis.status == "WRITTEN_OFF") cis.status = "Списан";
-            if (cis.status == "RETIRED") cis.status = "Выбыл";
-            if (cis.emissionType == "REMAINS") cis.emissionType = "Маркировка остатков";
-            if (cis.emissionType == "PRODUCTION") cis.emissionType = "Произведено в РФ";
-            if (cis.emissionType == "IMPORT") cis.emissionType = "Импорт";
-            if (cis.emissionType == "REMARK") cis.emissionType = "Перемаркировка";
-            if (cis.emissionType == "COMMISSION") cis.emissionType = "Принят на комиссию";
+            if (cis.Status == "EMITTED") cis.Status = "Эмитирован. Выпущен";
+            if (cis.Status == "APPLIED") cis.Status = "Эмитирован. Получен";
+            if (cis.Status == "INTRODUCED") cis.Status = "В обороте";
+            if (cis.Status == "WRITTEN_OFF") cis.Status = "Списан";
+            if (cis.Status == "RETIRED") cis.Status = "Выбыл";
+            if (cis.EmissionType == "REMAINS") cis.EmissionType = "Маркировка остатков";
+            if (cis.EmissionType == "PRODUCTION") cis.EmissionType = "Произведено в РФ";
+            if (cis.EmissionType == "IMPORT") cis.EmissionType = "Импорт";
+            if (cis.EmissionType == "REMARK") cis.EmissionType = "Перемаркировка";
+            if (cis.EmissionType == "COMMISSION") cis.EmissionType = "Принят на комиссию";
             return cis;
         }
-        public static string GetStatus(string km, bool refreshtoken)
+        public static CIS GetStatus(string km, bool refreshtoken)
         {
+            CIS cis = new CIS();
             token = config.AppSettings.Settings["token"].Value;
             if (token == string.Empty || refreshtoken)
-                GetToken();
-            Cis cis = new Cis();
+                if (!GetToken())
+                {
+                    cis.Error = "1001";
+                    cis.Error_message = "Ошибка получения нового token!";
+                    return cis;
+                }
             try
             {
-                var client = new RestClient($"{config.AppSettings.Settings["url"].Value}v4/facade/identifytools/info?childrenPage=1&childrenLimit=50&cis={HttpUtility.UrlEncode(km, Encoding.UTF8)}");
-                client.Timeout = -1;
+                var client = new RestClient($"{config.AppSettings.Settings["url"].Value}v4/facade/identifytools/info?childrenPage=1&childrenLimit=50&cis={HttpUtility.UrlEncode(km, Encoding.UTF8)}")
+                {
+                    Timeout = -1
+                };
                 var request = new RestRequest(Method.GET);
                 request.AddHeader("Authorization", $"Bearer {token}");
                 IRestResponse response = client.Execute(request);
                 logger.Info($"Данные по КМ ({km}) успешно получены.");
-                cis = JsonConvert.DeserializeObject<Cis>(response.Content);
-                if (cis.error != null && !refreshtoken)
+                cis = JsonConvert.DeserializeObject<CIS>(response.Content);
+                if ((cis.Code != 0 || cis.Error == "invalid_token") && !refreshtoken)
                     return GetStatus(km, true);
-                if (cis.status == null)
-                    return (cis.error_message + "!");
-                else
+                if (cis.Status != null)
                     cis = TranslateCis(cis);
-                return($"{cis.status} ({cis.emissionType})");
             }
             catch (Exception ex)
             {
-                logger.Error($"Ошибка получения данных по КМ ({km})!\n" + ex.Message);
-                return("Ошибка получения статуса!");
+                logger.Error($"Ошибка получения данных по КМ ({km})\n" + ex.Message);
+                cis.Error = "1002";
+                cis.Error_message = $"Ошибка получения данных по КМ ({km})";
             }
+            return cis;
         }
-        public static void GetToken()
+        public static bool GetToken()
         {
             try
             {
@@ -104,10 +102,12 @@ namespace HonestSign.Models
                 token = xmldoc.ChildNodes[1].ChildNodes[1].ChildNodes[2].Attributes[1].Value;
                 config.AppSettings.Settings["token"].Value = token;
                 config.Save(ConfigurationSaveMode.Modified, true);
+                return true;
             }
             catch (Exception ex)
             {
                 logger.Error("Ошибка получения нового token!\n" + ex.Message);
+                return false;
             }
         }
     }
