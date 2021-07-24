@@ -9,8 +9,9 @@ namespace HonestSign.Models
 {
     public class Shatura
     {
-        static Logger logger = LogManager.GetCurrentClassLogger();
-        static Configuration config = WebConfigurationManager.OpenWebConfiguration("~");
+        private static Logger logger = LogManager.GetCurrentClassLogger();
+        private static Configuration config = WebConfigurationManager.OpenWebConfiguration("~");
+        private static string token = string.Empty;
         public class Barcode
         {
             public string barcode { get; set; }
@@ -20,7 +21,14 @@ namespace HonestSign.Models
         {
             try
             {
-                var client = new RestClient($"https://apps.shatura.com/shatura1/bc/getbarcode/token={config.AppSettings.Settings["ShaturaToken"].Value}/ingred={id}");
+                if (token == string.Empty)
+                    token = config.AppSettings.Settings["ShaturaToken"].Value;
+                if (token == string.Empty)
+                {
+                    logger.Error($"Ошибка получения token Шатуры!");
+                    return "";
+                }
+                var client = new RestClient($"https://apps.shatura.com/shatura1/bc/getbarcode/token={token}/ingred={id}");
                 client.Timeout = -1;
                 var request = new RestRequest(Method.GET);
                 IRestResponse response = client.Execute(request);

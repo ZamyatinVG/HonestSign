@@ -14,9 +14,9 @@ namespace HonestSign.Models
 {
     public class KM
     {
-        static readonly Logger logger = LogManager.GetCurrentClassLogger();
-        static readonly Configuration config = WebConfigurationManager.OpenWebConfiguration("~");
-        static string token;
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+        private static readonly Configuration config = WebConfigurationManager.OpenWebConfiguration("~");
+        private static string token = string.Empty;
         public class CIS
         {
             public string Uit { get; set; }
@@ -60,7 +60,8 @@ namespace HonestSign.Models
         public static CIS GetStatus(string km, bool refreshtoken)
         {
             CIS cis = new CIS();
-            token = config.AppSettings.Settings["token"].Value;
+            if (token == string.Empty)
+                token = config.AppSettings.Settings["token"].Value;
             if (token == string.Empty || refreshtoken)
                 if (!GetToken())
                 {
@@ -79,7 +80,8 @@ namespace HonestSign.Models
                 IRestResponse response = client.Execute(request);
                 logger.Info($"Данные по КМ ({km}) успешно получены.");
                 cis = JsonConvert.DeserializeObject<CIS>(response.Content);
-                if ((cis.Code != 0 || cis.Error == "invalid_token") && !refreshtoken)
+                //Пробуем обновить token
+                if (cis.Error == "invalid_token" && !refreshtoken)
                     return GetStatus(km, true);
                 if (cis.Status != null)
                     cis = TranslateCis(cis);
