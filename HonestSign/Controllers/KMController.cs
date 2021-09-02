@@ -6,9 +6,9 @@ namespace HonestSign.Controllers
     {
         [HttpGet]
         [ValidateInput(false)]
-        public JsonResult GetStatus(string km)
+        public JsonResult GetStatus(string km, string filial)
         {
-            return Json(Models.KM.GetStatus(km, false), JsonRequestBehavior.AllowGet);
+            return Json(Models.KM.GetStatus(km, false, filial ?? "td"), JsonRequestBehavior.AllowGet);
         }
     }
 }
