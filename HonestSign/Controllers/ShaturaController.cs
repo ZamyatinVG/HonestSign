@@ -10,9 +10,9 @@ namespace HonestSign.Controllers
     {
         [HttpGet]
         [ValidateInput(false)]
-        public JsonResult GetBarcode(string id)
+        public JsonResult GetBarcode(string id, string nodoc)
         {
-            return Json(Models.Shatura.GetBarcode(id), JsonRequestBehavior.AllowGet);
+            return Json(Models.Shatura.GetBarcode(id, nodoc), JsonRequestBehavior.AllowGet);
         }
     }
 }

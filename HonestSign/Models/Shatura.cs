@@ -9,15 +9,15 @@ namespace HonestSign.Models
 {
     public class Shatura
     {
-        private static Logger logger = LogManager.GetCurrentClassLogger();
-        private static Configuration config = WebConfigurationManager.OpenWebConfiguration("~");
+        private static readonly Logger logger = LogManager.GetCurrentClassLogger();
+        private static readonly Configuration config = WebConfigurationManager.OpenWebConfiguration("~");
         private static string token = string.Empty;
-        public class Barcode
+        public class BarcodeResult
         {
-            public string barcode { get; set; }
-            public string error { get; set; }
+            public string Barcode { get; set; }
+            public string Error { get; set; }
         }
-        public static string GetBarcode(string id)
+        public static string GetBarcode(string id, string nodoc)
         {
             try
             {
@@ -28,19 +28,23 @@ namespace HonestSign.Models
                     logger.Error($"Ошибка получения token Шатуры!");
                     return "";
                 }
-                var client = new RestClient($"https://apps.shatura.com/shatura1/bc/getbarcode/token={token}/ingred={id}");
+                RestClient client;
+                if (nodoc == null)
+                    client = new RestClient($"https://apps.shatura.com/shatura1/bc/getbarcode/token={token}/ingred={id}");
+                else
+                    client = new RestClient($"https://apps.shatura.com/shatura1/bc/getsimplebarcodeorder/{token}/{id}/{nodoc}");
                 client.Timeout = -1;
                 var request = new RestRequest(Method.GET);
                 IRestResponse response = client.Execute(request);
-                logger.Info($"Данные по товару Шатуры ({id}) успешно получены.");
-                Barcode barcode = JsonConvert.DeserializeObject<Barcode>(response.Content);
-                if (barcode.error != null)
+                logger.Info($"Данные по товару Шатуры (id = {id}, nodoc = {nodoc}) успешно получены.");
+                BarcodeResult barcode = JsonConvert.DeserializeObject<BarcodeResult>(response.Content);
+                if (barcode.Error != null)
                 {
-                    logger.Error($"Сервис Шатуры вернул сообщение об ошибке по товару ({id}): {barcode.error}");
+                    logger.Error($"Сервис Шатуры вернул сообщение об ошибке по товару (id = {id}, nodoc = {nodoc}): {barcode.Error}");
                     return "";
                 }
                 else
-                    return ($"{barcode.barcode}");
+                    return ($"{barcode.Barcode}");
             }
             catch (Exception ex)
             {
