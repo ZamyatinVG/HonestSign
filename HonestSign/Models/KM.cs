@@ -112,24 +112,16 @@ namespace HonestSign.Models
                 tokenList.Remove(tokenList.Where(x => x.Filial == filial).First());
             try
             {
-                XmlDocument xmldoc = new XmlDocument();
-                FileStream fs = new FileStream(config.AppSettings.Settings["TokenGainer"].Value, FileMode.Open, FileAccess.Read);
-                xmldoc.Load(fs);
-                var nodeList = xmldoc.SelectNodes("configuration/appSettings/add");
-                string token = string.Empty;
-                foreach (XmlNode node in nodeList)
-                    if (node.Attributes[0].Value == $"token_{filial}")
-                    {
-                        token = node.Attributes[1].Value;
-                        tokenList.Add(new FilialToken { Filial = filial, Token = token });
-                        config.AppSettings.Settings[$"token_{filial}"].Value = token;
-                        config.Save(ConfigurationSaveMode.Modified, true);
-                        break;
-                    }
-                if (token == string.Empty)
-                    return false;
-                else
+                MainDB mainDB = new MainDB();
+                string tokenName = $"token_{filial}";
+                var setting = mainDB.SETTINGS.Where(x => x.FNAME == tokenName).FirstOrDefault();
+                if (setting != null)
+                {
+                    tokenList.Add(new FilialToken { Filial = filial, Token = setting.FVALUE });
                     return true;
+                }
+                else
+                    return false;
             }
             catch (Exception ex)
             {

@@ -3,6 +3,7 @@ using System.Text;
 using System.Configuration;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Pkcs;
+using System.Linq;
 using RestSharp;
 using Newtonsoft.Json;
 using NLog;
@@ -66,21 +67,38 @@ namespace TokenGainer
                     logger.Error(tokenResponse.Error_message);
                     return null;
                 }
-                int count = 0;
-                foreach (var key in settings.AllKeys)
-                    if (key == $"token_{filial}")
-                        count++;
-                if (count == 0)
-                    settings.Add($"token_{filial}", tokenResponse.Token);
-                else
-                    settings[$"token_{filial}"].Value = tokenResponse.Token;
-                configFile.Save(ConfigurationSaveMode.Full);
-                ConfigurationManager.RefreshSection(configFile.AppSettings.SectionInformation.Name);
-                logger.Info($"Новый token_{filial} успешно получен.");
             }
             catch (Exception ex)
             {
-                logger.Error("Ошибка получения нового token_{filial}!\n" + ex.Message);
+                logger.Error($"Ошибка получения нового token_{filial}!\n" + ex.Message);
+            }
+            try
+            {
+                MainDB mainDB = new MainDB();
+                string tokenName = $"token_{filial}";
+                var setting = mainDB.SETTINGS.Where(x => x.FNAME == tokenName).FirstOrDefault();
+                if (setting == null)
+                {
+                    setting = new SETTINGS
+                    {
+                        FNAME = $"token_{filial}",
+                        FVALUE = tokenResponse.Token,
+                        FMODIFIEDON = DateTime.Now
+                    };
+                    mainDB.SETTINGS.Add(setting);
+                }
+                else
+                {
+                    setting.FNAME = $"token_{filial}";
+                    setting.FVALUE = tokenResponse.Token;
+                    setting.FMODIFIEDON = DateTime.Now;
+                }
+                mainDB.SaveChanges();
+                logger.Info($"Новый token_{filial} успешно сохранен в БД.");
+            }
+            catch (Exception ex)
+            {
+                logger.Error($"Ошибка сохранения нового token_{filial} в БД !\n" + ex.Message);
             }
             return tokenResponse;
         }
