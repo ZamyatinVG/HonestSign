@@ -10,7 +10,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
 [assembly: AssemblyProduct("TokenGainer")]
-[assembly: AssemblyCopyright("Copyright © Askona 2021")]
+[assembly: AssemblyCopyright("Copyright © Askona 2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -33,4 +33,4 @@ using System.Runtime.InteropServices;
 // используя "*", как показано ниже:
 // [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("0.9.*")]
-[assembly: AssemblyFileVersion("0.9.7.0")]
+[assembly: AssemblyFileVersion("0.9.8.0")]
