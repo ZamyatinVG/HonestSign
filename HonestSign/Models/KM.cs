@@ -7,6 +7,7 @@ using System.Xml;
 using System.IO;
 using System.Text;
 using System.Linq;
+using System.Net;
 using RestSharp;
 using Newtonsoft.Json;
 using NLog;
@@ -90,13 +91,21 @@ namespace HonestSign.Models
                 var request = new RestRequest(Method.GET);
                 request.AddHeader("Authorization", $"Bearer {token}");
                 IRestResponse response = client.Execute(request);
-                logger.Info($"Данные по КМ ({km}) успешно получены.");
+                if (response == null || response.StatusCode != HttpStatusCode.OK)
+                    throw new Exception("Нет ответа от сервиса.");
+                else
+                    logger.Info($"Данные по КМ ({km}) успешно получены.");
                 cis = JsonConvert.DeserializeObject<CIS>(response.Content);
                 //Пробуем обновить token
                 if (cis.Error == "invalid_token" && !refreshtoken)
                     return GetStatus(km, true, filial);
                 if (cis.Status != null)
                     cis = TranslateCis(cis);
+                if (cis.Error == "invalid_token")
+                {
+                    cis.Status = "Сервис ЧЗ недоступен. Обратитесь на markirovka@askona.ru";
+                    cis.EmissionType = "";
+                }
             }
             catch (Exception ex)
             {

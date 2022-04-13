@@ -4,6 +4,7 @@ using System.Configuration;
 using System.Security.Cryptography.X509Certificates;
 using System.Security.Cryptography.Pkcs;
 using System.Linq;
+using System.Net;
 using RestSharp;
 using Newtonsoft.Json;
 using NLog;
@@ -45,12 +46,15 @@ namespace TokenGainer
                 };
                 var request = new RestRequest(Method.GET);
                 IRestResponse response = client.Execute(request);
+                if (response == null || response.StatusCode != HttpStatusCode.OK)
+                    throw new Exception("Нет ответа от сервиса.");
                 auth = JsonConvert.DeserializeObject<Auth>(response.Content);
                 logger.Info($"Новый uuid ({auth.Uuid}) успешно получен.");
             }
             catch (Exception ex)
             {
                 logger.Error("Ошибка получения нового uuid!\n" + ex.Message);
+                return null;
             }
             string thumbprint = settings[$"thumbprint_{filial}"].Value;
             if (GetSignedData(thumbprint, auth.Data, out string signedData))
@@ -62,16 +66,16 @@ namespace TokenGainer
                     request.AddHeader("Content-Type", "application/json");
                     request.AddParameter("application/json", $@"{{""uuid"":""{auth.Uuid}"",""data"":""{signedData}""}}", ParameterType.RequestBody);
                     var response = client.Execute(request);
+                    if (response == null || response.StatusCode != HttpStatusCode.OK)
+                        throw new Exception("Нет ответа от сервиса.");
                     tokenResponse = JsonConvert.DeserializeObject<TokenResponse>(response.Content);
                     if (tokenResponse.Code == 500)
-                    {
-                        logger.Error(tokenResponse.Error_message);
-                        return null;
-                    }
+                        throw new Exception(tokenResponse.Error_message);
                 }
                 catch (Exception ex)
                 {
                     logger.Error($"Ошибка получения нового token_{filial}!\n" + ex.Message);
+                    return null;
                 }
                 try
                 {
