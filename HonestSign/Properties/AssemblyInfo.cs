@@ -9,7 +9,7 @@ using System.Runtime.InteropServices;
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("Askona")]
 [assembly: AssemblyProduct("HonestSign")]
-[assembly: AssemblyCopyright("HonestSign © Askona 2021")]
+[assembly: AssemblyCopyright("HonestSign © Askona 2022")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
 
@@ -31,4 +31,4 @@ using System.Runtime.InteropServices;
 // Можно задать все значения или принять номер редакции и номер сборки по умолчанию,
 // используя "*", как показано ниже:
 [assembly: AssemblyVersion("0.9.*")]
-[assembly: AssemblyFileVersion("0.9.9.0")]
+[assembly: AssemblyFileVersion("0.9.10.0")]

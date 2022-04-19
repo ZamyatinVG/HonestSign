@@ -91,7 +91,8 @@ namespace HonestSign.Models
                 var request = new RestRequest(Method.GET);
                 request.AddHeader("Authorization", $"Bearer {token}");
                 IRestResponse response = client.Execute(request);
-                if (response == null || response.StatusCode != HttpStatusCode.OK)
+                logger.Debug(JsonConvert.SerializeObject(response));
+                if (response == null)
                     throw new Exception("Нет ответа от сервиса.");
                 else
                     logger.Info($"Данные по КМ ({km}) успешно получены.");
